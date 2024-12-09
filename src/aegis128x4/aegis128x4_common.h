@@ -208,11 +208,11 @@ AEGIS_declast(uint8_t *const dst, const uint8_t *const src, size_t len,
 }
 
 static void
-AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, aes_block_t *state)
+AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, AEGIS_AES_BLOCK_T *state)
 {
     uint8_t     t[2 * AES_BLOCK_LENGTH];
     uint8_t     r[AEGIS_RATE];
-    aes_block_t tmp;
+    AEGIS_AES_BLOCK_T tmp;
     int         i;
     const int   d = AES_BLOCK_LENGTH / 16;
 
