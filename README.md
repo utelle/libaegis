@@ -2,6 +2,8 @@
 
 Portable C implementations of the [AEGIS](https://datatracker.ietf.org/doc/draft-irtf-cfrg-aegis-aead/) family of high-performance authenticated ciphers (AEGIS-128L, AEGIS-128X2, AEGIS-128X4, AEGIS-256, AEGIS-256X2, AEGIS-256X4), with runtime CPU detection.
 
+The branch `amalgamation` contains adjusted source code that can be amalgamated and compiled as a single source file.
+
 ## Features
 
 - AEGIS-128L with 16 and 32 bytes tags (software, AES-NI, ARM Crypto, Altivec)
