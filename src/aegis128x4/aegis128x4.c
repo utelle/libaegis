@@ -206,7 +206,6 @@ AEGIS_API
 void
 aegis128x4_mac_init(aegis128x4_mac_state *st_, const uint8_t *k, const uint8_t *npub)
 {
-    memset(st_, 0, sizeof *st_);
     implementation_128x4->state_mac_init(st_, npub, k);
 }
 
@@ -278,11 +277,11 @@ aegis128x4_pick_best_implementation(void)
 #    ifdef HAVE_VAESINTRIN_H
     if (aegis_runtime_has_vaes() && aegis_runtime_has_avx512f()) {
       implementation_128x4 = &aegis128x4_avx512_implementation;
-      //  return 0;
+        return 0;
     }
     if (aegis_runtime_has_vaes() && aegis_runtime_has_avx2()) {
       implementation_128x4 = &aegis128x4_avx2_implementation;
-      //  return 0;
+        return 0;
     }
 #    endif
     if (aegis_runtime_has_aesni() && aegis_runtime_has_avx()) {

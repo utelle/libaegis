@@ -289,7 +289,6 @@ void aegis128x4_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t cle
  * k: key input buffer (16 bytes)
  *
  * - The same key MUST NOT be used both for MAC and encryption.
- * - The nonce MUST NOT be reused with the same key.
  * - If the key is secret, the MAC is secure against forgery.
  * - However, if the key is known, arbitrary inputs matching a tag can be efficiently computed.
  *

@@ -12,6 +12,7 @@ typedef AEGIS_AES_BLOCK_T AEGIS_BLOCKS[8];
 
 #define AEGIS_init     AEGIS_FUNC(init)
 #define AEGIS_mac      AEGIS_FUNC(mac)
+#define AEGIS_mac_nr   AEGIS_FUNC(mac_nr)
 #define AEGIS_absorb   AEGIS_FUNC(absorb)
 #define AEGIS_enc      AEGIS_FUNC(enc)
 #define AEGIS_dec      AEGIS_FUNC(dec)
@@ -204,6 +205,76 @@ AEGIS_declast(uint8_t *const dst, const uint8_t *const src, size_t len,
     msg1 = AEGIS_AES_BLOCK_LOAD(pad + AES_BLOCK_LENGTH);
 
     AEGIS_update(state, msg0, msg1);
+}
+
+static void
+AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, aes_block_t *state)
+{
+    uint8_t     t[2 * AES_BLOCK_LENGTH];
+    uint8_t     r[AEGIS_RATE];
+    aes_block_t tmp;
+    int         i;
+    const int   d = AES_BLOCK_LENGTH / 16;
+
+    tmp = AEGIS_AES_BLOCK_LOAD_64x2(0, adlen << 3);
+    tmp = AEGIS_AES_BLOCK_XOR(tmp, state[2]);
+
+    for (i = 0; i < 7; i++) {
+        AEGIS_update(state, tmp, tmp);
+    }
+
+    memset(r, 0, sizeof r);
+    if (maclen == 16) {
+#if AES_BLOCK_LENGTH > 16
+        tmp = AEGIS_AES_BLOCK_XOR(state[6], AEGIS_AES_BLOCK_XOR(state[5], state[4]));
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[3], state[2]));
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[1], state[0]));
+        AEGIS_AES_BLOCK_STORE(t, tmp);
+        for (i = 0; i < d / 2; i++) {
+            memcpy(r, t + i * 32, 32);
+            AEGIS_absorb(r, state);
+        }
+        tmp = AEGIS_AES_BLOCK_LOAD_64x2(d, maclen);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, state[2]);
+        for (i = 0; i < 7; i++) {
+            AEGIS_update(state, tmp, tmp);
+        }
+#endif
+        tmp = AEGIS_AES_BLOCK_XOR(state[6], AEGIS_AES_BLOCK_XOR(state[5], state[4]));
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[3], state[2]));
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[1], state[0]));
+        AEGIS_AES_BLOCK_STORE(t, tmp);
+        memcpy(mac, t, 16);
+    } else if (maclen == 32) {
+#if AES_BLOCK_LENGTH > 16
+        tmp = AEGIS_AES_BLOCK_XOR(state[3], state[2]);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[1], state[0]));
+        AEGIS_AES_BLOCK_STORE(t, tmp);
+        tmp = AEGIS_AES_BLOCK_XOR(state[7], state[6]);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[5], state[4]));
+        AEGIS_AES_BLOCK_STORE(t + AES_BLOCK_LENGTH, tmp);
+        for (i = 1; i < d; i++) {
+            memcpy(r, t + i * 16, 16);
+            memcpy(r + 16, t + AES_BLOCK_LENGTH + i * 16, 16);
+            AEGIS_absorb(r, state);
+        }
+        tmp = AEGIS_AES_BLOCK_LOAD_64x2(d, maclen);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, state[2]);
+        for (i = 0; i < 7; i++) {
+            AEGIS_update(state, tmp, tmp);
+        }
+#endif
+        tmp = AEGIS_AES_BLOCK_XOR(state[3], state[2]);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[1], state[0]));
+        AEGIS_AES_BLOCK_STORE(t, tmp);
+        memcpy(mac, t, 16);
+        tmp = AEGIS_AES_BLOCK_XOR(state[7], state[6]);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, AEGIS_AES_BLOCK_XOR(state[5], state[4]));
+        AEGIS_AES_BLOCK_STORE(t, tmp);
+        memcpy(mac + 16, t, 16);
+    } else {
+        memset(mac, 0, maclen);
+    }
 }
 
 static int
@@ -726,7 +797,7 @@ AEGIS_state_mac_final(aegis128x4_mac_state *st_, uint8_t *mac, size_t maclen)
         memset(st->buf + left, 0, AEGIS_RATE - left);
         AEGIS_absorb(st->buf, blocks);
     }
-    AEGIS_mac(mac, maclen, st->adlen, 0, blocks);
+    AEGIS_mac_nr(mac, maclen, st->adlen, blocks);
 
     memcpy(st->blocks, blocks, sizeof blocks);
 
@@ -761,6 +832,7 @@ AEGIS_state_mac_clone(aegis128x4_mac_state *dst, const aegis128x4_mac_state *src
 
 #undef AEGIS_init
 #undef AEGIS_mac
+#undef AEGIS_mac_nr
 #undef AEGIS_absorb
 #undef AEGIS_enc
 #undef AEGIS_dec
