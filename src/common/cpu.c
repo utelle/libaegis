@@ -1,3 +1,10 @@
+/*
+** Name:        cpu.c
+** Purpose:     Implementation of CPU feature identification
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
 #include "cpu.h"
 #include "common.h"
 
@@ -271,6 +278,7 @@ _runtime_powerpc_cpu_features(CPUFeatures *const cpu_features)
     return 0;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_get_cpu_features(void)
 {
@@ -286,48 +294,56 @@ aegis_runtime_get_cpu_features(void)
     return ret;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_neon(void)
 {
     return _cpu_features.has_neon;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_armcrypto(void)
 {
     return _cpu_features.has_armcrypto;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_avx(void)
 {
     return _cpu_features.has_avx;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_avx2(void)
 {
     return _cpu_features.has_avx2;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_avx512f(void)
 {
     return _cpu_features.has_avx512f;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_aesni(void)
 {
     return _cpu_features.has_aesni;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_vaes(void)
 {
     return _cpu_features.has_vaes;
 }
 
+AEGIS_PRIVATE
 int
 aegis_runtime_has_altivec(void)
 {

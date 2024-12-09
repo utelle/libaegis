@@ -1,5 +1,12 @@
-#ifndef aegis_H
-#define aegis_H
+/*
+** Name:        aegis.h
+** Purpose:     Header for AEGIS API
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
+#ifndef AEGIS_H
+#define AEGIS_H
 
 #include <stdint.h>
 
@@ -16,6 +23,13 @@
 #    else
 #        define CRYPTO_ALIGN(x) __attribute__((aligned(x)))
 #    endif
+#endif
+
+#ifndef AEGIS_API
+#define AEGIS_API
+#endif
+#ifndef AEGIS_PRIVATE
+#define AEGIS_PRIVATE static
 #endif
 
 #include "aegis128l.h"
@@ -38,6 +52,7 @@ extern "C" {
  *
  * The function can be called multiple times but is not thread-safe.
  */
+AEGIS_API
 int aegis_init(void);
 
 /* Compare two 16-byte blocks for equality.
@@ -46,6 +61,7 @@ int aegis_init(void);
  *
  * Returns 0 if the blocks are equal, -1 otherwise.
  */
+AEGIS_API
 int aegis_verify_16(const uint8_t *x, const uint8_t *y) __attribute__((warn_unused_result));
 
 /* Compare two 32-byte blocks for equality.
@@ -54,10 +70,11 @@ int aegis_verify_16(const uint8_t *x, const uint8_t *y) __attribute__((warn_unus
  *
  * Returns 0 if the blocks are equal, -1 otherwise.
  */
+AEGIS_API
 int aegis_verify_32(const uint8_t *x, const uint8_t *y) __attribute__((warn_unused_result));
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* AEGIS_H */

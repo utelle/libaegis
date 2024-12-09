@@ -1,12 +1,20 @@
-#ifndef common_H
-#define common_H
+/*
+** Name:        common.h
+** Purpose:     Common header for AEGIS implementations
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
+#ifndef AEGIS_COMMON_H
+#define AEGIS_COMMON_H
 
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
-#include "aegis.h"
+#include "../include/aegis.h"
+#include "cpu.h"
 
 #ifdef __linux__
 #    define HAVE_SYS_AUXV_H
@@ -18,13 +26,15 @@
 #    endif
 #    define HAVE_ANDROID_GETCPUFEATURES
 #endif
-#if defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64)
+#if defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
 
 #    define HAVE_CPUID
 #    define NATIVE_LITTLE_ENDIAN
 #    if defined(__clang__) || defined(__GNUC__)
 #        define HAVE_AVX_ASM
 #    endif
+#endif
+#if HAS_AEGIS_AES_HARDWARE == AEGIS_AES_HARDWARE_NI
 #    define HAVE_AVXINTRIN_H
 #    define HAVE_AVX2INTRIN_H
 #    define HAVE_AVX512FINTRIN_H
@@ -50,9 +60,9 @@
 #    define CRYPTO_ALIGN(x) __attribute__((aligned(x)))
 #endif
 
-#define LOAD32_LE(SRC) load32_le(SRC)
+#define AEGIS_LOAD32_LE(SRC) aegis_load32_le(SRC)
 static inline uint32_t
-load32_le(const uint8_t src[4])
+aegis_load32_le(const uint8_t src[4])
 {
 #ifdef NATIVE_LITTLE_ENDIAN
     uint32_t w;
@@ -67,9 +77,9 @@ load32_le(const uint8_t src[4])
 #endif
 }
 
-#define STORE32_LE(DST, W) store32_le((DST), (W))
+#define AEGIS_STORE32_LE(DST, W) aegis_store32_le((DST), (W))
 static inline void
-store32_le(uint8_t dst[4], uint32_t w)
+aegis_store32_le(uint8_t dst[4], uint32_t w)
 {
 #ifdef NATIVE_LITTLE_ENDIAN
     memcpy(dst, &w, sizeof w);
@@ -84,9 +94,9 @@ store32_le(uint8_t dst[4], uint32_t w)
 #endif
 }
 
-#define ROTL32(X, B) rotl32((X), (B))
+#define AEGIS_ROTL32(X, B) aegis_rotl32((X), (B))
 static inline uint32_t
-rotl32(const uint32_t x, const int b)
+aegis_rotl32(const uint32_t x, const int b)
 {
     return (x << b) | (x >> (32 - b));
 }
@@ -100,4 +110,26 @@ rotl32(const uint32_t x, const int b)
 #    define EINVAL 22
 #endif
 
-#endif
+#define AEGIS_CONCAT(A,B) AEGIS_CONCAT_(A,B)
+#define AEGIS_CONCAT_(A,B) A##B
+#define AEGIS_FUNC(name) AEGIS_CONCAT(AEGIS_FUNC_PREFIX,AEGIS_CONCAT(_,name))
+
+#define AEGIS_API_IMPL_LIST                                               \
+    .encrypt_detached              = AEGIS_encrypt_detached,              \
+    .decrypt_detached              = AEGIS_decrypt_detached,              \
+    .encrypt_unauthenticated       = AEGIS_encrypt_unauthenticated,       \
+    .decrypt_unauthenticated       = AEGIS_decrypt_unauthenticated,       \
+    .stream                        = AEGIS_stream,                        \
+    .state_init                    = AEGIS_state_init,                    \
+    .state_encrypt_update          = AEGIS_state_encrypt_update,          \
+    .state_encrypt_detached_final  = AEGIS_state_encrypt_detached_final,  \
+    .state_encrypt_final           = AEGIS_state_encrypt_final,           \
+    .state_decrypt_detached_update = AEGIS_state_decrypt_detached_update, \
+    .state_decrypt_detached_final  = AEGIS_state_decrypt_detached_final,  \
+    .state_mac_init                = AEGIS_state_mac_init,                \
+    .state_mac_update              = AEGIS_state_mac_update,              \
+    .state_mac_final               = AEGIS_state_mac_final,               \
+    .state_mac_reset               = AEGIS_state_mac_reset,               \
+    .state_mac_clone               = AEGIS_state_mac_clone,
+
+#endif /* AEGIS_COMMON_H */

@@ -1,5 +1,12 @@
-#ifndef aegis128x4_H
-#define aegis128x4_H
+/*
+** Name:        aegis128x4.h
+** Purpose:     Header for AEGIS-128x4 API
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
+#ifndef AEGIS128X4_H
+#define AEGIS128X4_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -31,22 +38,33 @@ typedef struct aegis128x4_state {
     CRYPTO_ALIGN(64) uint8_t opaque[832];
 } aegis128x4_state;
 
+/* An AEGIS state, only for MAC updates */
+typedef struct aegis128x4_mac_state {
+    CRYPTO_ALIGN(64) uint8_t opaque[1664];
+} aegis128x4_mac_state;
+
+
 /* The length of an AEGIS key, in bytes */
+AEGIS_API
 size_t aegis128x4_keybytes(void);
 
 /* The length of an AEGIS nonce, in bytes */
+AEGIS_API
 size_t aegis128x4_npubbytes(void);
 
 /* The minimum length of an AEGIS authentication tag, in bytes */
+AEGIS_API
 size_t aegis128x4_abytes_min(void);
 
 /* The maximum length of an AEGIS authentication tag, in bytes */
+AEGIS_API
 size_t aegis128x4_abytes_max(void);
 
 /*
  * When using AEGIS in incremental mode, this is the maximum number
  * of leftover ciphertext bytes that can be returned at finalization.
  */
+AEGIS_API
 size_t aegis128x4_tailbytes_max(void);
 
 /*
@@ -62,6 +80,7 @@ size_t aegis128x4_tailbytes_max(void);
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 int aegis128x4_encrypt_detached(uint8_t *c, uint8_t *mac, size_t maclen, const uint8_t *m,
                                 size_t mlen, const uint8_t *ad, size_t adlen, const uint8_t *npub,
                                 const uint8_t *k);
@@ -81,6 +100,7 @@ int aegis128x4_encrypt_detached(uint8_t *c, uint8_t *mac, size_t maclen, const u
  *
  * Returns 0 if the ciphertext is authentic, -1 otherwise.
  */
+AEGIS_API
 int aegis128x4_decrypt_detached(uint8_t *m, const uint8_t *c, size_t clen, const uint8_t *mac,
                                 size_t maclen, const uint8_t *ad, size_t adlen, const uint8_t *npub,
                                 const uint8_t *k) __attribute__((warn_unused_result));
@@ -97,6 +117,7 @@ int aegis128x4_decrypt_detached(uint8_t *m, const uint8_t *c, size_t clen, const
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 int aegis128x4_encrypt(uint8_t *c, size_t maclen, const uint8_t *m, size_t mlen, const uint8_t *ad,
                        size_t adlen, const uint8_t *npub, const uint8_t *k);
 
@@ -114,6 +135,7 @@ int aegis128x4_encrypt(uint8_t *c, size_t maclen, const uint8_t *m, size_t mlen,
  *
  * Returns 0 if the ciphertext is authentic, -1 otherwise.
  */
+AEGIS_API
 int aegis128x4_decrypt(uint8_t *m, const uint8_t *c, size_t clen, size_t maclen, const uint8_t *ad,
                        size_t adlen, const uint8_t *npub, const uint8_t *k)
     __attribute__((warn_unused_result));
@@ -127,6 +149,7 @@ int aegis128x4_decrypt(uint8_t *m, const uint8_t *c, size_t clen, size_t maclen,
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128x4_state_init(aegis128x4_state *st_, const uint8_t *ad, size_t adlen,
                            const uint8_t *npub, const uint8_t *k);
 
@@ -143,6 +166,7 @@ void aegis128x4_state_init(aegis128x4_state *st_, const uint8_t *ad, size_t adle
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128x4_state_encrypt_update(aegis128x4_state *st_, uint8_t *c, size_t clen_max,
                                     size_t *written, const uint8_t *m, size_t mlen);
 
@@ -158,6 +182,7 @@ int aegis128x4_state_encrypt_update(aegis128x4_state *st_, uint8_t *c, size_t cl
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128x4_state_encrypt_detached_final(aegis128x4_state *st_, uint8_t *c, size_t clen_max,
                                             size_t *written, uint8_t *mac, size_t maclen);
 
@@ -173,6 +198,7 @@ int aegis128x4_state_encrypt_detached_final(aegis128x4_state *st_, uint8_t *c, s
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128x4_state_encrypt_final(aegis128x4_state *st_, uint8_t *c, size_t clen_max,
                                    size_t *written, size_t maclen);
 
@@ -190,6 +216,7 @@ int aegis128x4_state_encrypt_final(aegis128x4_state *st_, uint8_t *c, size_t cle
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128x4_state_decrypt_detached_update(aegis128x4_state *st_, uint8_t *m, size_t mlen_max,
                                              size_t *written, const uint8_t *c, size_t clen)
     __attribute__((warn_unused_result));
@@ -206,6 +233,7 @@ int aegis128x4_state_decrypt_detached_update(aegis128x4_state *st_, uint8_t *m, 
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128x4_state_decrypt_detached_final(aegis128x4_state *st_, uint8_t *m, size_t mlen_max,
                                             size_t *written, const uint8_t *mac, size_t maclen)
     __attribute__((warn_unused_result));
@@ -219,6 +247,7 @@ int aegis128x4_state_decrypt_detached_final(aegis128x4_state *st_, uint8_t *m, s
  * generated from a given key.
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128x4_stream(uint8_t *out, size_t len, const uint8_t *npub, const uint8_t *k);
 
 /*
@@ -233,6 +262,7 @@ void aegis128x4_stream(uint8_t *out, size_t len, const uint8_t *npub, const uint
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128x4_encrypt_unauthenticated(uint8_t *c, const uint8_t *m, size_t mlen,
                                         const uint8_t *npub, const uint8_t *k);
 
@@ -248,6 +278,7 @@ void aegis128x4_encrypt_unauthenticated(uint8_t *c, const uint8_t *m, size_t mle
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128x4_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t clen,
                                         const uint8_t *npub, const uint8_t *k);
 
@@ -264,7 +295,8 @@ void aegis128x4_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t cle
  *
  * The recommended way to use the MAC mode is to generate a random key and keep it secret.
  */
-void aegis128x4_mac_init(aegis128x4_state *st_, const uint8_t *k, const uint8_t *npub);
+AEGIS_API
+void aegis128x4_mac_init(aegis128x4_mac_state *st_, const uint8_t *k, const uint8_t *npub);
 
 /*
  * Update the MAC state with input data.
@@ -277,7 +309,8 @@ void aegis128x4_mac_init(aegis128x4_state *st_, const uint8_t *k, const uint8_t 
  *
  * Once the full input has been absorb, call either `_mac_final` or `_mac_verify`.
  */
-int aegis128x4_mac_update(aegis128x4_state *st_, const uint8_t *m, size_t mlen);
+AEGIS_API
+int aegis128x4_mac_update(aegis128x4_mac_state *st_, const uint8_t *m, size_t mlen);
 
 /*
  * Finalize the MAC and generate the authentication tag.
@@ -286,7 +319,8 @@ int aegis128x4_mac_update(aegis128x4_state *st_, const uint8_t *m, size_t mlen);
  * mac: authentication tag output buffer
  * maclen: length of the authentication tag to generate (16 or 32. 32 is recommended).
  */
-int aegis128x4_mac_final(aegis128x4_state *st_, uint8_t *mac, size_t maclen);
+AEGIS_API
+int aegis128x4_mac_final(aegis128x4_mac_state *st_, uint8_t *mac, size_t maclen);
 
 /*
  * Verify a MAC in constant time.
@@ -297,7 +331,14 @@ int aegis128x4_mac_final(aegis128x4_state *st_, uint8_t *mac, size_t maclen);
  *
  * Returns 0 if the tag is authentic, -1 otherwise.
  */
-int aegis128x4_mac_verify(aegis128x4_state *st_, const uint8_t *mac, size_t maclen);
+AEGIS_API
+int aegis128x4_mac_verify(aegis128x4_mac_state *st_, const uint8_t *mac, size_t maclen);
+
+/*
+ * Reset an AEGIS_MAC state.
+ */
+AEGIS_API
+void aegis128x4_mac_reset(aegis128x4_mac_state *st_);
 
 /*
  * Clone an AEGIS-MAC state.
@@ -307,10 +348,11 @@ int aegis128x4_mac_verify(aegis128x4_state *st_, const uint8_t *mac, size_t macl
  *
  * This function MUST be used in order to clone states.
  */
-void aegis128x4_mac_state_clone(aegis128x4_state *dst, const aegis128x4_state *src);
+AEGIS_API
+void aegis128x4_mac_state_clone(aegis128x4_mac_state *dst, const aegis128x4_mac_state *src);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* AEGIS128X4_H */

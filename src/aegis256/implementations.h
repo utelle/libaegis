@@ -1,5 +1,12 @@
-#ifndef aegis256_implementations_H
-#define aegis256_implementations_H
+/*
+** Name:        implementations.h
+** Purpose:     Header for implementation structure of AEGIS-256
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
+#ifndef AEGIS256_IMPLEMENTATIONS_H
+#define AEGIS256_IMPLEMENTATIONS_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -36,4 +43,4 @@ typedef struct aegis256_implementation {
     void (*state_mac_clone)(aegis256_mac_state *dst, const aegis256_mac_state *src);
 } aegis256_implementation;
 
-#endif
+#endif /* AEGIS256_IMPLEMENTATIONS_H */

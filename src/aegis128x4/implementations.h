@@ -1,5 +1,12 @@
-#ifndef aegis128x4_implementations_H
-#define aegis128x4_implementations_H
+/*
+** Name:        implementations.h
+** Purpose:     Header for implementation structure of AEGIS-128x4
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
+#ifndef AEGIS128X4_IMPLEMENTATIONS_H
+#define AEGIS128X4_IMPLEMENTATIONS_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -29,9 +36,11 @@ typedef struct aegis128x4_implementation {
                                          size_t *written, const uint8_t *c, size_t clen);
     int (*state_decrypt_detached_final)(aegis128x4_state *st_, uint8_t *m, size_t mlen_max,
                                         size_t *written, const uint8_t *mac, size_t maclen);
-    int (*state_mac_update)(aegis128x4_state *st_, const uint8_t *ad, size_t adlen);
-    int (*state_mac_final)(aegis128x4_state *st_, uint8_t *mac, size_t maclen);
-    void (*state_clone)(aegis128x4_state *dst, const aegis128x4_state *src);
+    void (*state_mac_init)(aegis128x4_mac_state *st_, const uint8_t *npub, const uint8_t *k);
+    int (*state_mac_update)(aegis128x4_mac_state *st_, const uint8_t *ad, size_t adlen);
+    int (*state_mac_final)(aegis128x4_mac_state *st_, uint8_t *mac, size_t maclen);
+    void (*state_mac_reset)(aegis128x4_mac_state *st);
+    void (*state_mac_clone)(aegis128x4_mac_state *dst, const aegis128x4_mac_state *src);
 } aegis128x4_implementation;
 
-#endif
+#endif /* AEGIS128X4_IMPLEMENTATIONS_H */

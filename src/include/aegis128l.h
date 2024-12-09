@@ -1,5 +1,12 @@
-#ifndef aegis128l_H
-#define aegis128l_H
+/*
+** Name:        aegis128l.h
+** Purpose:     Header for AEGIS-128L API
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
+#ifndef AEGIS128L_H
+#define AEGIS128L_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -36,22 +43,28 @@ typedef struct aegis128l_mac_state {
     CRYPTO_ALIGN(32) uint8_t opaque[512];
 } aegis128l_mac_state;
 
+
 /* The length of an AEGIS key, in bytes */
+AEGIS_API
 size_t aegis128l_keybytes(void);
 
 /* The length of an AEGIS nonce, in bytes */
+AEGIS_API
 size_t aegis128l_npubbytes(void);
 
 /* The minimum length of an AEGIS authentication tag, in bytes */
+AEGIS_API
 size_t aegis128l_abytes_min(void);
 
 /* The maximum length of an AEGIS authentication tag, in bytes */
+AEGIS_API
 size_t aegis128l_abytes_max(void);
 
 /*
  * When using AEGIS in incremental mode, this is the maximum number
  * of leftover ciphertext bytes that can be returned at finalization.
  */
+AEGIS_API
 size_t aegis128l_tailbytes_max(void);
 
 /*
@@ -67,6 +80,7 @@ size_t aegis128l_tailbytes_max(void);
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 int aegis128l_encrypt_detached(uint8_t *c, uint8_t *mac, size_t maclen, const uint8_t *m,
                                size_t mlen, const uint8_t *ad, size_t adlen, const uint8_t *npub,
                                const uint8_t *k);
@@ -86,6 +100,7 @@ int aegis128l_encrypt_detached(uint8_t *c, uint8_t *mac, size_t maclen, const ui
  *
  * Returns 0 if the ciphertext is authentic, -1 otherwise.
  */
+AEGIS_API
 int aegis128l_decrypt_detached(uint8_t *m, const uint8_t *c, size_t clen, const uint8_t *mac,
                                size_t maclen, const uint8_t *ad, size_t adlen, const uint8_t *npub,
                                const uint8_t *k) __attribute__((warn_unused_result));
@@ -102,6 +117,7 @@ int aegis128l_decrypt_detached(uint8_t *m, const uint8_t *c, size_t clen, const 
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 int aegis128l_encrypt(uint8_t *c, size_t maclen, const uint8_t *m, size_t mlen, const uint8_t *ad,
                       size_t adlen, const uint8_t *npub, const uint8_t *k);
 
@@ -119,6 +135,7 @@ int aegis128l_encrypt(uint8_t *c, size_t maclen, const uint8_t *m, size_t mlen, 
  *
  * Returns 0 if the ciphertext is authentic, -1 otherwise.
  */
+AEGIS_API
 int aegis128l_decrypt(uint8_t *m, const uint8_t *c, size_t clen, size_t maclen, const uint8_t *ad,
                       size_t adlen, const uint8_t *npub, const uint8_t *k)
     __attribute__((warn_unused_result));
@@ -132,6 +149,7 @@ int aegis128l_decrypt(uint8_t *m, const uint8_t *c, size_t clen, size_t maclen, 
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128l_state_init(aegis128l_state *st_, const uint8_t *ad, size_t adlen,
                           const uint8_t *npub, const uint8_t *k);
 
@@ -148,6 +166,7 @@ void aegis128l_state_init(aegis128l_state *st_, const uint8_t *ad, size_t adlen,
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128l_state_encrypt_update(aegis128l_state *st_, uint8_t *c, size_t clen_max,
                                    size_t *written, const uint8_t *m, size_t mlen);
 
@@ -163,6 +182,7 @@ int aegis128l_state_encrypt_update(aegis128l_state *st_, uint8_t *c, size_t clen
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128l_state_encrypt_detached_final(aegis128l_state *st_, uint8_t *c, size_t clen_max,
                                            size_t *written, uint8_t *mac, size_t maclen);
 
@@ -178,6 +198,7 @@ int aegis128l_state_encrypt_detached_final(aegis128l_state *st_, uint8_t *c, siz
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128l_state_encrypt_final(aegis128l_state *st_, uint8_t *c, size_t clen_max,
                                   size_t *written, size_t maclen);
 
@@ -195,6 +216,7 @@ int aegis128l_state_encrypt_final(aegis128l_state *st_, uint8_t *c, size_t clen_
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128l_state_decrypt_detached_update(aegis128l_state *st_, uint8_t *m, size_t mlen_max,
                                             size_t *written, const uint8_t *c, size_t clen)
     __attribute__((warn_unused_result));
@@ -211,6 +233,7 @@ int aegis128l_state_decrypt_detached_update(aegis128l_state *st_, uint8_t *m, si
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_API
 int aegis128l_state_decrypt_detached_final(aegis128l_state *st_, uint8_t *m, size_t mlen_max,
                                            size_t *written, const uint8_t *mac, size_t maclen)
     __attribute__((warn_unused_result));
@@ -224,6 +247,7 @@ int aegis128l_state_decrypt_detached_final(aegis128l_state *st_, uint8_t *m, siz
  * generated from a given key.
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128l_stream(uint8_t *out, size_t len, const uint8_t *npub, const uint8_t *k);
 
 /*
@@ -238,6 +262,7 @@ void aegis128l_stream(uint8_t *out, size_t len, const uint8_t *npub, const uint8
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128l_encrypt_unauthenticated(uint8_t *c, const uint8_t *m, size_t mlen,
                                        const uint8_t *npub, const uint8_t *k);
 
@@ -253,6 +278,7 @@ void aegis128l_encrypt_unauthenticated(uint8_t *c, const uint8_t *m, size_t mlen
  * npub: nonce input buffer (16 bytes)
  * k: key input buffer (16 bytes)
  */
+AEGIS_API
 void aegis128l_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t clen,
                                        const uint8_t *npub, const uint8_t *k);
 
@@ -272,6 +298,7 @@ void aegis128l_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t clen
  * with `aegis128l_mac_state_clone()`. It is only safe to copy a state directly without using
  * the clone function if the state is guaranteed to be properly aligned.
  */
+AEGIS_API
 void aegis128l_mac_init(aegis128l_mac_state *st_, const uint8_t *k, const uint8_t *npub);
 
 /*
@@ -285,6 +312,7 @@ void aegis128l_mac_init(aegis128l_mac_state *st_, const uint8_t *k, const uint8_
  *
  * Once the full input has been absorb, call either `_mac_final` or `_mac_verify`.
  */
+AEGIS_API
 int aegis128l_mac_update(aegis128l_mac_state *st_, const uint8_t *m, size_t mlen);
 
 /*
@@ -294,6 +322,7 @@ int aegis128l_mac_update(aegis128l_mac_state *st_, const uint8_t *m, size_t mlen
  * mac: authentication tag output buffer
  * maclen: length of the authentication tag to generate (16 or 32. 32 is recommended).
  */
+AEGIS_API
 int aegis128l_mac_final(aegis128l_mac_state *st_, uint8_t *mac, size_t maclen);
 
 /*
@@ -305,11 +334,13 @@ int aegis128l_mac_final(aegis128l_mac_state *st_, uint8_t *mac, size_t maclen);
  *
  * Returns 0 if the tag is authentic, -1 otherwise.
  */
+AEGIS_API
 int aegis128l_mac_verify(aegis128l_mac_state *st_, const uint8_t *mac, size_t maclen);
 
 /*
  * Reset an AEGIS_MAC state.
  */
+AEGIS_API
 void aegis128l_mac_reset(aegis128l_mac_state *st_);
 
 /*
@@ -320,10 +351,11 @@ void aegis128l_mac_reset(aegis128l_mac_state *st_);
  *
  * This function MUST be used in order to clone states.
  */
+AEGIS_API
 void aegis128l_mac_state_clone(aegis128l_mac_state *dst, const aegis128l_mac_state *src);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* AEGIS128L_H */

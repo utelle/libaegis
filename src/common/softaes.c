@@ -1,3 +1,10 @@
+/*
+** Name:        softaes.c
+** Purpose:     Implementation of AES via software
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -276,24 +283,24 @@ _encrypt(const uint8_t ix0[4], const uint8_t ix1[4], const uint8_t ix2[4], const
 #    endif
 
     out.w0 = t[0][0][ix0[0] / SOFTAES_STRIDE];
-    out.w0 ^= ROTL32(t[0][1][ix1[0] / SOFTAES_STRIDE], 8);
-    out.w0 ^= ROTL32(t[0][2][ix2[0] / SOFTAES_STRIDE], 16);
-    out.w0 ^= ROTL32(t[0][3][ix3[0] / SOFTAES_STRIDE], 24);
+    out.w0 ^= AEGIS_ROTL32(t[0][1][ix1[0] / SOFTAES_STRIDE], 8);
+    out.w0 ^= AEGIS_ROTL32(t[0][2][ix2[0] / SOFTAES_STRIDE], 16);
+    out.w0 ^= AEGIS_ROTL32(t[0][3][ix3[0] / SOFTAES_STRIDE], 24);
 
     out.w1 = t[1][0][ix0[1] / SOFTAES_STRIDE];
-    out.w1 ^= ROTL32(t[1][1][ix1[1] / SOFTAES_STRIDE], 8);
-    out.w1 ^= ROTL32(t[1][2][ix2[1] / SOFTAES_STRIDE], 16);
-    out.w1 ^= ROTL32(t[1][3][ix3[1] / SOFTAES_STRIDE], 24);
+    out.w1 ^= AEGIS_ROTL32(t[1][1][ix1[1] / SOFTAES_STRIDE], 8);
+    out.w1 ^= AEGIS_ROTL32(t[1][2][ix2[1] / SOFTAES_STRIDE], 16);
+    out.w1 ^= AEGIS_ROTL32(t[1][3][ix3[1] / SOFTAES_STRIDE], 24);
 
     out.w2 = t[2][0][ix0[2] / SOFTAES_STRIDE];
-    out.w2 ^= ROTL32(t[2][1][ix1[2] / SOFTAES_STRIDE], 8);
-    out.w2 ^= ROTL32(t[2][2][ix2[2] / SOFTAES_STRIDE], 16);
-    out.w2 ^= ROTL32(t[2][3][ix3[2] / SOFTAES_STRIDE], 24);
+    out.w2 ^= AEGIS_ROTL32(t[2][1][ix1[2] / SOFTAES_STRIDE], 8);
+    out.w2 ^= AEGIS_ROTL32(t[2][2][ix2[2] / SOFTAES_STRIDE], 16);
+    out.w2 ^= AEGIS_ROTL32(t[2][3][ix3[2] / SOFTAES_STRIDE], 24);
 
     out.w3 = t[3][0][ix0[3] / SOFTAES_STRIDE];
-    out.w3 ^= ROTL32(t[3][1][ix1[3] / SOFTAES_STRIDE], 8);
-    out.w3 ^= ROTL32(t[3][2][ix2[3] / SOFTAES_STRIDE], 16);
-    out.w3 ^= ROTL32(t[3][3][ix3[3] / SOFTAES_STRIDE], 24);
+    out.w3 ^= AEGIS_ROTL32(t[3][1][ix1[3] / SOFTAES_STRIDE], 8);
+    out.w3 ^= AEGIS_ROTL32(t[3][2][ix2[3] / SOFTAES_STRIDE], 16);
+    out.w3 ^= AEGIS_ROTL32(t[3][3][ix3[3] / SOFTAES_STRIDE], 24);
 
     return out;
 }

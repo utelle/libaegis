@@ -1,108 +1,114 @@
+/*
+** Name:        aegis256x4_avx2.c
+** Purpose:     Implementation of AEGIS-256x4 - AES-NI AVX2
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
 #if defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64)
 
-#    include <errno.h>
-#    include <stddef.h>
-#    include <stdint.h>
-#    include <stdlib.h>
-#    include <string.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-#    include "../common/common.h"
-#    include "aegis256x4.h"
-#    include "aegis256x4_avx2.h"
+#include "../common/common.h"
+#include "aegis256x4.h"
+#include "aegis256x4_avx2.h"
 
-#    ifdef HAVE_VAESINTRIN_H
+#ifdef HAVE_VAESINTRIN_H
 
-#        ifdef __clang__
-#            pragma clang attribute push(__attribute__((target("vaes,avx2"))), apply_to = function)
-#        elif defined(__GNUC__)
-#            pragma GCC target("vaes,avx2")
-#        endif
+#ifdef __clang__
+#  pragma clang attribute push(__attribute__((target("vaes,avx2"))), apply_to = function)
+#elif defined(__GNUC__)
+#  pragma GCC target("vaes,avx2")
+#endif
 
-#        include <immintrin.h>
+#include <immintrin.h>
 
-#        define AES_BLOCK_LENGTH 64
+#define AES_BLOCK_LENGTH 64
 
 typedef struct {
     __m256i b0;
     __m256i b1;
-} aes_block_t;
+} aegis256_avx2_aes_block_t;
 
-static inline aes_block_t
-AES_BLOCK_XOR(const aes_block_t a, const aes_block_t b)
+#define AEGIS_AES_BLOCK_T aegis256_avx2_aes_block_t
+#define AEGIS_BLOCKS      aegis256x4_avx2_blocks
+#define AEGIS_STATE      _aegis256x4_avx2_state
+#define AEGIS_MAC_STATE  _aegis256x4_avx2_mac_state
+
+#define AEGIS_FUNC_PREFIX  aegis256x4_avx2_impl
+
+#include "../common/func_names_define.h"
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_XOR(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
 {
-    return (aes_block_t) { _mm256_xor_si256(a.b0, b.b0), _mm256_xor_si256(a.b1, b.b1) };
+    return (AEGIS_AES_BLOCK_T) { _mm256_xor_si256(a.b0, b.b0), _mm256_xor_si256(a.b1, b.b1) };
 }
 
-static inline aes_block_t
-AES_BLOCK_AND(const aes_block_t a, const aes_block_t b)
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_AND(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
 {
-    return (aes_block_t) { _mm256_and_si256(a.b0, b.b0), _mm256_and_si256(a.b1, b.b1) };
+    return (AEGIS_AES_BLOCK_T) { _mm256_and_si256(a.b0, b.b0), _mm256_and_si256(a.b1, b.b1) };
 }
 
-static inline aes_block_t
-AES_BLOCK_LOAD(const uint8_t *a)
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_LOAD(const uint8_t *a)
 {
-    return (aes_block_t) { _mm256_loadu_si256((const __m256i *) (const void *) a),
+    return (AEGIS_AES_BLOCK_T) { _mm256_loadu_si256((const __m256i *) (const void *) a),
                            _mm256_loadu_si256((const __m256i *) (const void *) (a + 32)) };
 }
 
-static inline aes_block_t
-AES_BLOCK_LOAD_64x2(uint64_t a, uint64_t b)
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_LOAD_64x2(uint64_t a, uint64_t b)
 {
     const __m256i t = _mm256_broadcastsi128_si256(_mm_set_epi64x((long long) a, (long long) b));
-    return (aes_block_t) { t, t };
+    return (AEGIS_AES_BLOCK_T) { t, t };
 }
 
 static inline void
-AES_BLOCK_STORE(uint8_t *a, const aes_block_t b)
+AEGIS_AES_BLOCK_STORE(uint8_t *a, const AEGIS_AES_BLOCK_T b)
 {
     _mm256_storeu_si256((__m256i *) (void *) a, b.b0);
     _mm256_storeu_si256((__m256i *) (void *) (a + 32), b.b1);
 }
 
-static inline aes_block_t
-AES_ENC(const aes_block_t a, const aes_block_t b)
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_ENC(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
 {
-    return (aes_block_t) { _mm256_aesenc_epi128(a.b0, b.b0), _mm256_aesenc_epi128(a.b1, b.b1) };
+    return (AEGIS_AES_BLOCK_T) { _mm256_aesenc_epi128(a.b0, b.b0), _mm256_aesenc_epi128(a.b1, b.b1) };
 }
 
 static inline void
-aegis256x4_update(aes_block_t *const state, const aes_block_t d)
+AEGIS_update(AEGIS_AES_BLOCK_T *const state, const AEGIS_AES_BLOCK_T d)
 {
-    aes_block_t tmp;
+    AEGIS_AES_BLOCK_T tmp;
 
     tmp      = state[5];
-    state[5] = AES_ENC(state[4], state[5]);
-    state[4] = AES_ENC(state[3], state[4]);
-    state[3] = AES_ENC(state[2], state[3]);
-    state[2] = AES_ENC(state[1], state[2]);
-    state[1] = AES_ENC(state[0], state[1]);
-    state[0] = AES_BLOCK_XOR(AES_ENC(tmp, state[0]), d);
+    state[5] = AEGIS_AES_ENC(state[4], state[5]);
+    state[4] = AEGIS_AES_ENC(state[3], state[4]);
+    state[3] = AEGIS_AES_ENC(state[2], state[3]);
+    state[2] = AEGIS_AES_ENC(state[1], state[2]);
+    state[1] = AEGIS_AES_ENC(state[0], state[1]);
+    state[0] = AEGIS_AES_BLOCK_XOR(AEGIS_AES_ENC(tmp, state[0]), d);
 }
 
-#        include "aegis256x4_common.h"
+#include "aegis256x4_common.h"
 
 struct aegis256x4_implementation aegis256x4_avx2_implementation = {
-    .encrypt_detached              = encrypt_detached,
-    .decrypt_detached              = decrypt_detached,
-    .encrypt_unauthenticated       = encrypt_unauthenticated,
-    .decrypt_unauthenticated       = decrypt_unauthenticated,
-    .stream                        = stream,
-    .state_init                    = state_init,
-    .state_encrypt_update          = state_encrypt_update,
-    .state_encrypt_detached_final  = state_encrypt_detached_final,
-    .state_encrypt_final           = state_encrypt_final,
-    .state_decrypt_detached_update = state_decrypt_detached_update,
-    .state_decrypt_detached_final  = state_decrypt_detached_final,
-    .state_mac_update              = state_mac_update,
-    .state_mac_final               = state_mac_final,
-    .state_clone                   = state_clone,
+    AEGIS_API_IMPL_LIST
 };
 
-#        ifdef __clang__
-#            pragma clang attribute pop
-#        endif
+#include "../common/type_names_undefine.h"
+#include "../common/func_names_undefine.h"
 
-#    endif
+#ifdef __clang__
+#  pragma clang attribute pop
+#endif
+
+#endif /* HAVE_VAESINTRIN_H */
 
 #endif

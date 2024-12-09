@@ -1,3 +1,10 @@
+/*
+** Name:        aegis256_soft.c
+** Purpose:     Implementation of AEGIS-256 - Software
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -7,56 +14,78 @@
 #include "../common/common.h"
 #include "../common/cpu.h"
 
-#ifndef HAS_HW_AES
+#include "../common/softaes.h"
+#include "aegis256.h"
+#include "aegis256_soft.h"
 
-#    include "../common/softaes.h"
-#    include "aegis256.h"
-#    include "aegis256_soft.h"
+#define AES_BLOCK_LENGTH 16
 
-#    define AES_BLOCK_LENGTH 16
+typedef SoftAesBlock aegis256_soft_aes_block_t;
 
-typedef SoftAesBlock aes_block_t;
+#define AEGIS_AES_BLOCK_T aegis256_soft_aes_block_t
+#define AEGIS_BLOCKS      aegis256_soft_blocks
+#define AEGIS_STATE      _aegis256_soft_state
+#define AEGIS_MAC_STATE  _aegis256_soft_mac_state
 
-#    define AES_BLOCK_XOR(A, B)       softaes_block_xor((A), (B))
-#    define AES_BLOCK_AND(A, B)       softaes_block_and((A), (B))
-#    define AES_BLOCK_LOAD(A)         softaes_block_load(A)
-#    define AES_BLOCK_LOAD_64x2(A, B) softaes_block_load64x2((A), (B))
-#    define AES_BLOCK_STORE(A, B)     softaes_block_store((A), (B))
-#    define AES_ENC(A, B)             softaes_block_encrypt((A), (B))
+#define AEGIS_FUNC_PREFIX  aegis256_soft_impl
 
-static inline void
-aegis256_update(aes_block_t *const state, const aes_block_t d)
+#include "../common/func_names_define.h"
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_XOR(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
 {
-    aes_block_t tmp;
-
-    tmp      = state[5];
-    state[5] = AES_ENC(state[4], state[5]);
-    state[4] = AES_ENC(state[3], state[4]);
-    state[3] = AES_ENC(state[2], state[3]);
-    state[2] = AES_ENC(state[1], state[2]);
-    state[1] = AES_ENC(state[0], state[1]);
-    state[0] = AES_BLOCK_XOR(AES_ENC(tmp, state[0]), d);
+  return softaes_block_xor(a, b);
 }
 
-#    include "aegis256_common.h"
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_AND(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
+{
+  return softaes_block_and(a, b);
+}
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_LOAD(const uint8_t *a)
+{
+  return softaes_block_load(a);
+}
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_LOAD_64x2(uint64_t a, uint64_t b)
+{
+  return softaes_block_load64x2(a, b);
+}
+
+static inline void
+AEGIS_AES_BLOCK_STORE(uint8_t *a, const AEGIS_AES_BLOCK_T b)
+{
+  softaes_block_store(a, b);
+}
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_ENC(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
+{
+  return softaes_block_encrypt(a, b);
+}
+
+static inline void
+AEGIS_update(AEGIS_AES_BLOCK_T *const state, const AEGIS_AES_BLOCK_T d)
+{
+    AEGIS_AES_BLOCK_T tmp;
+
+    tmp      = state[5];
+    state[5] = AEGIS_AES_ENC(state[4], state[5]);
+    state[4] = AEGIS_AES_ENC(state[3], state[4]);
+    state[3] = AEGIS_AES_ENC(state[2], state[3]);
+    state[2] = AEGIS_AES_ENC(state[1], state[2]);
+    state[1] = AEGIS_AES_ENC(state[0], state[1]);
+    state[0] = AEGIS_AES_BLOCK_XOR(AEGIS_AES_ENC(tmp, state[0]), d);
+}
+
+#include "aegis256_common.h"
 
 struct aegis256_implementation aegis256_soft_implementation = {
-    .encrypt_detached              = encrypt_detached,
-    .decrypt_detached              = decrypt_detached,
-    .encrypt_unauthenticated       = encrypt_unauthenticated,
-    .decrypt_unauthenticated       = decrypt_unauthenticated,
-    .stream                        = stream,
-    .state_init                    = state_init,
-    .state_encrypt_update          = state_encrypt_update,
-    .state_encrypt_detached_final  = state_encrypt_detached_final,
-    .state_encrypt_final           = state_encrypt_final,
-    .state_decrypt_detached_update = state_decrypt_detached_update,
-    .state_decrypt_detached_final  = state_decrypt_detached_final,
-    .state_mac_init                = state_mac_init,
-    .state_mac_update              = state_mac_update,
-    .state_mac_final               = state_mac_final,
-    .state_mac_reset               = state_mac_reset,
-    .state_mac_clone               = state_mac_clone,
+    AEGIS_API_IMPL_LIST
 };
 
-#endif
+#include "../common/type_names_undefine.h"
+#include "../common/func_names_undefine.h"

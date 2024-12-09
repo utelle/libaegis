@@ -708,10 +708,10 @@ test "aegis128x4 - MAC" {
     const nonce = [_]u8{0} ** 16;
     const msg = [_]u8{ 1, 2, 3 } ** 100 ++ [_]u8{0};
     const msg2 = [_]u8{ 4, 5, 6, 7, 8 } ** 100;
-    var st0: aegis.aegis128x4_state = undefined;
+    var st0: aegis.aegis128x4_mac_state = undefined;
     aegis.aegis128x4_mac_init(&st0, &key, &nonce);
 
-    var st: aegis.aegis128x4_state = undefined;
+    var st: aegis.aegis128x4_mac_state = undefined;
     aegis.aegis128x4_mac_state_clone(&st, &st0);
     var ret = aegis.aegis128x4_mac_update(&st, &msg, msg.len);
     try testing.expectEqual(ret, 0);

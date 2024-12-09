@@ -1,3 +1,10 @@
+/*
+** Name:        common.c
+** Purpose:     Implementation of common utility functions
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -26,25 +33,28 @@ aegis_verify_n(const uint8_t *x_, const uint8_t *y_, const int n)
     return (int) d - 1;
 }
 
+AEGIS_API
 int
 aegis_verify_16(const uint8_t *x, const uint8_t *y)
 {
     return aegis_verify_n(x, y, 16);
 }
 
+AEGIS_API
 int
 aegis_verify_32(const uint8_t *x, const uint8_t *y)
 {
     return aegis_verify_n(x, y, 32);
 }
 
-extern int aegis128l_pick_best_implementation(void);
-extern int aegis128x2_pick_best_implementation(void);
-extern int aegis128x4_pick_best_implementation(void);
-extern int aegis256_pick_best_implementation(void);
-extern int aegis256x2_pick_best_implementation(void);
-extern int aegis256x4_pick_best_implementation(void);
+AEGIS_PRIVATE int aegis128l_pick_best_implementation(void);
+AEGIS_PRIVATE int aegis128x2_pick_best_implementation(void);
+AEGIS_PRIVATE int aegis128x4_pick_best_implementation(void);
+AEGIS_PRIVATE int aegis256_pick_best_implementation(void);
+AEGIS_PRIVATE int aegis256x2_pick_best_implementation(void);
+AEGIS_PRIVATE int aegis256x4_pick_best_implementation(void);
 
+AEGIS_API
 int
 aegis_init(void)
 {

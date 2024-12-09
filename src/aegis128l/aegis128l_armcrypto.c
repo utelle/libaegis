@@ -1,81 +1,114 @@
+/*
+** Name:        aegis128l_armcrypto.c
+** Purpose:     Implementation of AEGIS-128L - ARM-Crypto
+** Copyright:   (c) 2023-2024 Frank Denis
+** SPDX-License-Identifier: MIT
+*/
+
 #if defined(__aarch64__) || defined(_M_ARM64)
 
-#    include <errno.h>
-#    include <stddef.h>
-#    include <stdint.h>
-#    include <stdlib.h>
-#    include <string.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-#    include "../common/common.h"
-#    include "aegis128l.h"
-#    include "aegis128l_armcrypto.h"
+#include "../common/common.h"
+#include "aegis128l.h"
+#include "aegis128l_armcrypto.h"
 
-#    ifndef __ARM_FEATURE_CRYPTO
-#        define __ARM_FEATURE_CRYPTO 1
-#    endif
-#    ifndef __ARM_FEATURE_AES
-#        define __ARM_FEATURE_AES 1
-#    endif
+#ifndef __ARM_FEATURE_CRYPTO
+#  define __ARM_FEATURE_CRYPTO 1
+#endif
+#ifndef __ARM_FEATURE_AES
+#  define __ARM_FEATURE_AES 1
+#endif
 
-#    include <arm_neon.h>
+#include <arm_neon.h>
 
-#    ifdef __clang__
-#        pragma clang attribute push(__attribute__((target("neon,crypto,aes"))), \
+#ifdef __clang__
+#  pragma clang attribute push(__attribute__((target("neon,crypto,aes"))), \
                                      apply_to = function)
-#    elif defined(__GNUC__)
-#        pragma GCC target("+simd+crypto")
-#    endif
+#elif defined(__GNUC__)
+#  pragma GCC target("+simd+crypto")
+#endif
 
-#    define AES_BLOCK_LENGTH 16
+#define AES_BLOCK_LENGTH 16
 
-typedef uint8x16_t aes_block_t;
+typedef uint8x16_t aegis128l_aes_block_t;
 
-#    define AES_BLOCK_XOR(A, B)       veorq_u8((A), (B))
-#    define AES_BLOCK_AND(A, B)       vandq_u8((A), (B))
-#    define AES_BLOCK_LOAD(A)         vld1q_u8(A)
-#    define AES_BLOCK_LOAD_64x2(A, B) vreinterpretq_u8_u64(vsetq_lane_u64((A), vmovq_n_u64(B), 1))
-#    define AES_BLOCK_STORE(A, B)     vst1q_u8((A), (B))
-#    define AES_ENC(A, B)             veorq_u8(vaesmcq_u8(vaeseq_u8((A), vmovq_n_u8(0))), (B))
+#define AEGIS_AES_BLOCK_T aegis128l_aes_block_t
+#define AEGIS_BLOCKS      aegis128l_blocks
+#define AEGIS_STATE      _aegis128l_state
+#define AEGIS_MAC_STATE  _aegis128l_mac_state
 
-static inline void
-aegis128l_update(aes_block_t *const state, const aes_block_t d1, const aes_block_t d2)
+#define AEGIS_FUNC_PREFIX  aegis128l_impl
+
+#include "../common/func_names_define.h"
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_XOR(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
 {
-    aes_block_t tmp;
-
-    tmp      = state[7];
-    state[7] = AES_ENC(state[6], state[7]);
-    state[6] = AES_ENC(state[5], state[6]);
-    state[5] = AES_ENC(state[4], state[5]);
-    state[4] = AES_BLOCK_XOR(AES_ENC(state[3], state[4]), d2);
-    state[3] = AES_ENC(state[2], state[3]);
-    state[2] = AES_ENC(state[1], state[2]);
-    state[1] = AES_ENC(state[0], state[1]);
-    state[0] = AES_BLOCK_XOR(AES_ENC(tmp, state[0]), d1);
+  return veorq_u8(a, b);
 }
 
-#    include "aegis128l_common.h"
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_AND(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
+{
+  return vandq_u8(a, b);
+}
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_LOAD(const uint8_t *a)
+{
+  return vld1q_u8(a);
+}
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_BLOCK_LOAD_64x2(uint64_t a, uint64_t b)
+{
+  return vreinterpretq_u8_u64(vsetq_lane_u64(a, vmovq_n_u64(b), 1));
+}
+
+static inline void
+AEGIS_AES_BLOCK_STORE(uint8_t *a, const AEGIS_AES_BLOCK_T b)
+{
+  vst1q_u8(a, b);
+}
+
+static inline AEGIS_AES_BLOCK_T
+AEGIS_AES_ENC(const AEGIS_AES_BLOCK_T a, const AEGIS_AES_BLOCK_T b)
+{
+  return veorq_u8(vaesmcq_u8(vaeseq_u8(a, vmovq_n_u8(0))), b);
+}
+
+static inline void
+AEGIS_update(AEGIS_AES_BLOCK_T *const state, const AEGIS_AES_BLOCK_T d1, const AEGIS_AES_BLOCK_T d2)
+{
+    AEGIS_AES_BLOCK_T tmp;
+
+    tmp      = state[7];
+    state[7] = AEGIS_AES_ENC(state[6], state[7]);
+    state[6] = AEGIS_AES_ENC(state[5], state[6]);
+    state[5] = AEGIS_AES_ENC(state[4], state[5]);
+    state[4] = AEGIS_AES_BLOCK_XOR(AEGIS_AES_ENC(state[3], state[4]), d2);
+    state[3] = AEGIS_AES_ENC(state[2], state[3]);
+    state[2] = AEGIS_AES_ENC(state[1], state[2]);
+    state[1] = AEGIS_AES_ENC(state[0], state[1]);
+    state[0] = AEGIS_AES_BLOCK_XOR(AEGIS_AES_ENC(tmp, state[0]), d1);
+}
+
+#include "aegis128l_common.h"
 
 struct aegis128l_implementation aegis128l_armcrypto_implementation = {
-    .encrypt_detached              = encrypt_detached,
-    .decrypt_detached              = decrypt_detached,
-    .encrypt_unauthenticated       = encrypt_unauthenticated,
-    .decrypt_unauthenticated       = decrypt_unauthenticated,
-    .stream                        = stream,
-    .state_init                    = state_init,
-    .state_encrypt_update          = state_encrypt_update,
-    .state_encrypt_detached_final  = state_encrypt_detached_final,
-    .state_encrypt_final           = state_encrypt_final,
-    .state_decrypt_detached_update = state_decrypt_detached_update,
-    .state_decrypt_detached_final  = state_decrypt_detached_final,
-    .state_mac_init                = state_mac_init,
-    .state_mac_update              = state_mac_update,
-    .state_mac_final               = state_mac_final,
-    .state_mac_reset               = state_mac_reset,
-    .state_mac_clone               = state_mac_clone,
+    AEGIS_API_IMPL_LIST
 };
 
-#    ifdef __clang__
-#        pragma clang attribute pop
-#    endif
+#include "../common/type_names_undefine.h"
+#include "../common/func_names_undefine.h"
+
+#ifdef __clang__
+#  pragma clang attribute pop
+#endif
 
 #endif
