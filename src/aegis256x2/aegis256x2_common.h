@@ -221,8 +221,8 @@ AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, AEGIS_AES_BLOCK_T *sta
             memcpy(r, t + i * 16, 16);
             AEGIS_absorb(r, state);
         }
-        tmp = AES_BLOCK_LOAD_64x2(maclen, d);
-        tmp = AES_BLOCK_XOR(tmp, state[3]);
+        tmp = AEGIS_AES_BLOCK_LOAD_64x2(maclen, d);
+        tmp = AEGIS_AES_BLOCK_XOR(tmp, state[3]);
         for (i = 0; i < 7; i++) {
             AEGIS_update(state, tmp);
         }
