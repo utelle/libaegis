@@ -246,7 +246,7 @@ aegis256x2_mac_verify(aegis256x2_mac_state *st_, const uint8_t *mac, size_t macl
 
 AEGIS_API
 void
-AEGIS_mac_reset(aegis256x2_mac_state *st_)
+aegis256x2_mac_reset(aegis256x2_mac_state *st_)
 {
     implementation_256x2->state_mac_reset(st_);
 }
