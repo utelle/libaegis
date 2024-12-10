@@ -40,7 +40,7 @@ typedef struct aegis128x4_state {
 
 /* An AEGIS state, only for MAC updates */
 typedef struct aegis128x4_mac_state {
-    CRYPTO_ALIGN(64) uint8_t opaque[1664];
+    CRYPTO_ALIGN(64) uint8_t opaque[1344];
 } aegis128x4_mac_state;
 
 
@@ -293,6 +293,12 @@ void aegis128x4_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t cle
  * - However, if the key is known, arbitrary inputs matching a tag can be efficiently computed.
  *
  * The recommended way to use the MAC mode is to generate a random key and keep it secret.
+ *
+ * After initialization, the state can be reused to generate multiple MACs by cloning it
+ * with `aegis128x4_mac_state_clone()`. It is only safe to copy a state directly without using
+ * the clone function if the state is guaranteed to be properly aligned.
+ *
+ * A state can also be reset for reuse without cloning with `aegis128x4_mac_reset()`.
  */
 AEGIS_API
 void aegis128x4_mac_init(aegis128x4_mac_state *st_, const uint8_t *k, const uint8_t *npub);

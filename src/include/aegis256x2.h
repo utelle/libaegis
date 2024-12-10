@@ -40,7 +40,7 @@ typedef struct aegis256x2_state {
 
 /* An AEGIS state, only for MAC updates */
 typedef struct aegis256x2_mac_state {
-    CRYPTO_ALIGN(32) uint8_t opaque[640];
+    CRYPTO_ALIGN(32) uint8_t opaque[512];
 } aegis256x2_mac_state;
 
 /* The length of an AEGIS key, in bytes */
@@ -288,11 +288,16 @@ void aegis256x2_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t cle
  * k: key input buffer (32 bytes)
  *
  * - The same key MUST NOT be used both for MAC and encryption.
- * - The nonce MUST NOT be reused with the same key.
  * - If the key is secret, the MAC is secure against forgery.
  * - However, if the key is known, arbitrary inputs matching a tag can be efficiently computed.
  *
  * The recommended way to use the MAC mode is to generate a random key and keep it secret.
+ *
+ * After initialization, the state can be reused to generate multiple MACs by cloning it
+ * with `aegis256x2_mac_state_clone()`. It is only safe to copy a state directly without using
+ * the clone function if the state is guaranteed to be properly aligned.
+ *
+ * A state can also be reset for reuse without cloning with `aegis256x2_mac_reset()`.
  */
 AEGIS_API
 void aegis256x2_mac_init(aegis256x2_mac_state *st_, const uint8_t *k, const uint8_t *npub);

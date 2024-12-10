@@ -318,8 +318,8 @@ typedef struct AEGIS_STATE {
 } AEGIS_STATE;
 
 typedef struct AEGIS_MAC_STATE {
-    AEGIS_BLOCKS blocks0;
     AEGIS_BLOCKS blocks;
+    AEGIS_BLOCKS blocks0;
     uint8_t      buf[AEGIS_RATE];
     uint64_t     adlen;
     size_t       pos;
@@ -677,7 +677,7 @@ AEGIS_state_mac_final(aegis128l_mac_state *st_, uint8_t *mac, size_t maclen)
         memset(st->buf + left, 0, AEGIS_RATE - left);
         AEGIS_absorb(st->buf, blocks);
     }
-    AEGIS_mac(mac, maclen, st->adlen, 0, blocks);
+    AEGIS_mac(mac, maclen, st->adlen, maclen, blocks);
 
     memcpy(st->blocks, blocks, sizeof blocks);
 

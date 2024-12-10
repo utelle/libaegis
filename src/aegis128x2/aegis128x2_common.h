@@ -12,12 +12,11 @@ typedef AEGIS_AES_BLOCK_T AEGIS_BLOCKS[8];
 
 #define AEGIS_init     AEGIS_FUNC(init)
 #define AEGIS_mac      AEGIS_FUNC(mac)
+#define AEGIS_mac_nr   AEGIS_FUNC(mac_nr)
 #define AEGIS_absorb   AEGIS_FUNC(absorb)
 #define AEGIS_enc      AEGIS_FUNC(enc)
 #define AEGIS_dec      AEGIS_FUNC(dec)
 #define AEGIS_declast  AEGIS_FUNC(declast)
-
-#define AEGIS_mac_nr   AEGIS_FUNC(mac_nr)
 
 static void
 AEGIS_init(const uint8_t *key, const uint8_t *nonce, AEGIS_AES_BLOCK_T *const state)
@@ -202,7 +201,7 @@ AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, AEGIS_AES_BLOCK_T*stat
     int         i;
     const int   d = AES_BLOCK_LENGTH / 16;
 
-    tmp = AEGIS_AES_BLOCK_LOAD_64x2(0, adlen << 3);
+    tmp = AEGIS_AES_BLOCK_LOAD_64x2(maclen, adlen << 3);
     tmp = AEGIS_AES_BLOCK_XOR(tmp, state[2]);
 
     for (i = 0; i < 7; i++) {
@@ -220,7 +219,7 @@ AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, AEGIS_AES_BLOCK_T*stat
             memcpy(r, t + i * 32, 32);
             AEGIS_absorb(r, state);
         }
-        tmp = AEGIS_AES_BLOCK_LOAD_64x2(d, maclen);
+        tmp = AEGIS_AES_BLOCK_LOAD_64x2(maclen, d);
         tmp = AEGIS_AES_BLOCK_XOR(tmp, state[2]);
         for (i = 0; i < 7; i++) {
             AEGIS_update(state, tmp, tmp);
@@ -244,7 +243,7 @@ AEGIS_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, AEGIS_AES_BLOCK_T*stat
             memcpy(r + 16, t + AES_BLOCK_LENGTH + i * 16, 16);
             AEGIS_absorb(r, state);
         }
-        tmp = AEGIS_AES_BLOCK_LOAD_64x2(d, maclen);
+        tmp = AEGIS_AES_BLOCK_LOAD_64x2(maclen, d);
         tmp = AEGIS_AES_BLOCK_XOR(tmp, state[2]);
         for (i = 0; i < 7; i++) {
             AEGIS_update(state, tmp, tmp);
@@ -423,8 +422,8 @@ typedef struct AEGIS_STATE {
 } AEGIS_STATE;
 
 typedef struct AEGIS_MAC_STATE {
-    AEGIS_BLOCKS blocks0;
     AEGIS_BLOCKS blocks;
+    AEGIS_BLOCKS blocks0;
     uint8_t      buf[AEGIS_RATE];
     uint64_t     adlen;
     size_t       pos;
@@ -819,9 +818,8 @@ AEGIS_state_mac_clone(aegis128x2_mac_state *dst, const aegis128x2_mac_state *src
 
 #undef AEGIS_init
 #undef AEGIS_mac
+#undef AEGIS_mac_nr
 #undef AEGIS_absorb
 #undef AEGIS_enc
 #undef AEGIS_dec
 #undef AEGIS_declast
-
-#undef AEGIS_mac_nr

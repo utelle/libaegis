@@ -40,7 +40,7 @@ typedef struct aegis128l_state {
 
 /* An AEGIS state, only for MAC updates */
 typedef struct aegis128l_mac_state {
-    CRYPTO_ALIGN(32) uint8_t opaque[512];
+    CRYPTO_ALIGN(32) uint8_t opaque[384];
 } aegis128l_mac_state;
 
 
@@ -297,6 +297,8 @@ void aegis128l_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t clen
  * After initialization, the state can be reused to generate multiple MACs by cloning it
  * with `aegis128l_mac_state_clone()`. It is only safe to copy a state directly without using
  * the clone function if the state is guaranteed to be properly aligned.
+ *
+ * A state can also be reset for reuse without cloning with `aegis128l_mac_reset()`.
  */
 AEGIS_API
 void aegis128l_mac_init(aegis128l_mac_state *st_, const uint8_t *k, const uint8_t *npub);

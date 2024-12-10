@@ -205,7 +205,6 @@ AEGIS_API
 void
 aegis256x4_mac_init(aegis256x4_mac_state *st_, const uint8_t *k, const uint8_t *npub)
 {
-    memset(st_, 0, sizeof *st_);
     implementation_256x4->state_mac_init(st_, npub, k);
 }
 

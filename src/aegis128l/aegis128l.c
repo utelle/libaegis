@@ -203,7 +203,9 @@ AEGIS_API
 void
 aegis128l_mac_init(aegis128l_mac_state *st_, const uint8_t *k, const uint8_t *npub)
 {
+#if 0
     memset(st_, 0, sizeof *st_);
+#endif
     implementation_128l->state_mac_init(st_, npub, k);
 }
 

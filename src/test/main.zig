@@ -661,7 +661,7 @@ test "aegis128l - MAC" {
     var mac2: [mac.len]u8 = undefined;
     ret = aegis.aegis128l_encrypt_detached(&mac2, &mac2, mac2.len, "", 0, &msg3, msg3.len, &nonce, &key);
     try testing.expectEqual(ret, 0);
-    try testing.expectEqualSlices(u8, &mac, &mac2);
+    try testing.expect(!std.mem.eql(u8, &mac, &mac2));
 }
 
 test "aegis128x2 - MAC" {
@@ -761,8 +761,8 @@ test "aegis128l - MAC test vector" {
     try testing.expectEqual(ret, 0);
     ret = aegis.aegis128l_mac_final(&st, &mac256, mac256.len);
     try testing.expectEqual(ret, 0);
-    const expected128_hex = "3982e98c66fa9232e9190ec57b120725";
-    const expected256_hex = "a7d01b4636e8d312af8b65b3bb680feb8ffd62aa234584001b1e419b4b40c317";
+    const expected128_hex = "d3f09b2842ad301687d6902c921d7818";
+    const expected256_hex = "9490e7c89d420c9f37417fa625eb38e8cad53c5cbec55285e8499ea48377f2a3";
     var expected128: [16]u8 = undefined;
     var expected256: [32]u8 = undefined;
     _ = try std.fmt.hexToBytes(&expected128, expected128_hex);
@@ -790,8 +790,8 @@ test "aegis128x2 - MAC test vector" {
     try testing.expectEqual(ret, 0);
     ret = aegis.aegis128x2_mac_final(&st, &mac256, mac256.len);
     try testing.expectEqual(ret, 0);
-    const expected128_hex = "f472304012396667f51ab7450d87f460";
-    const expected256_hex = "f376288f13b51c73ecb814922919a31f2cbe1fd322a0062ef7860327a2bc3159";
+    const expected128_hex = "21c6922d3ad6522ac57369600314c912";
+    const expected256_hex = "83dd64b45d75ef3537f45f0ec5b275189b98fb241fed02672122c73f5ce8ac07";
     var expected128: [16]u8 = undefined;
     var expected256: [32]u8 = undefined;
     _ = try std.fmt.hexToBytes(&expected128, expected128_hex);
@@ -819,8 +819,95 @@ test "aegis128x4 - MAC test vector" {
     try testing.expectEqual(ret, 0);
     ret = aegis.aegis128x4_mac_final(&st, &mac256, mac256.len);
     try testing.expectEqual(ret, 0);
-    const expected128_hex = "3742a0bf0a9e8604841fe520fc57621c";
-    const expected256_hex = "3da44ead4e192d0df3c47c994c242b69dab2fdf0d98f58f96838d634ab945d3a";
+    const expected128_hex = "90b56cd04f89737f558e7add279bcfa6";
+    const expected256_hex = "2b6e56d61a23e15ab84967fe936f7a68ae32b666412ed0504c57fff2cdb744a4";
+    var expected128: [16]u8 = undefined;
+    var expected256: [32]u8 = undefined;
+    _ = try std.fmt.hexToBytes(&expected128, expected128_hex);
+    _ = try std.fmt.hexToBytes(&expected256, expected256_hex);
+    try std.testing.expectEqualSlices(u8, &expected128, &mac128);
+    try std.testing.expectEqualSlices(u8, &expected256, &mac256);
+}
+
+test "aegis256 - MAC test vector" {
+    const key = [_]u8{ 0x10, 0x01 } ++ [_]u8{0x00} ** (32 - 2);
+    const nonce = [_]u8{ 0x10, 0x00, 0x02 } ++ [_]u8{0x00} ** (32 - 3);
+    var msg: [35]u8 = undefined;
+    for (&msg, 0..) |*byte, i| byte.* = @truncate(i);
+    var mac128: [16]u8 = undefined;
+    var mac256: [32]u8 = undefined;
+    var st: aegis.aegis256_mac_state = undefined;
+    var ret: c_int = undefined;
+    aegis.aegis256_mac_init(&st, &key, &nonce);
+    ret = aegis.aegis256_mac_update(&st, &msg, msg.len);
+    try testing.expectEqual(ret, 0);
+    ret = aegis.aegis256_mac_final(&st, &mac128, mac128.len);
+    try testing.expectEqual(ret, 0);
+    aegis.aegis256_mac_reset(&st);
+    ret = aegis.aegis256_mac_update(&st, &msg, msg.len);
+    try testing.expectEqual(ret, 0);
+    ret = aegis.aegis256_mac_final(&st, &mac256, mac256.len);
+    try testing.expectEqual(ret, 0);
+    const expected128_hex = "c08e20cfc56f27195a46c9cef5c162d4";
+    const expected256_hex = "a5c906ede3d69545c11e20afa360b221f936e946ed2dba3d7c75ad6dc2784126";
+    var expected128: [16]u8 = undefined;
+    var expected256: [32]u8 = undefined;
+    _ = try std.fmt.hexToBytes(&expected128, expected128_hex);
+    _ = try std.fmt.hexToBytes(&expected256, expected256_hex);
+    try std.testing.expectEqualSlices(u8, &expected128, &mac128);
+    try std.testing.expectEqualSlices(u8, &expected256, &mac256);
+}
+
+test "aegis256x2 - MAC test vector" {
+    const key = [_]u8{ 0x10, 0x01 } ++ [_]u8{0x00} ** (32 - 2);
+    const nonce = [_]u8{ 0x10, 0x00, 0x02 } ++ [_]u8{0x00} ** (32 - 3);
+    var msg: [35]u8 = undefined;
+    for (&msg, 0..) |*byte, i| byte.* = @truncate(i);
+    var mac128: [16]u8 = undefined;
+    var mac256: [32]u8 = undefined;
+    var st: aegis.aegis256x2_mac_state = undefined;
+    var ret: c_int = undefined;
+    aegis.aegis256x2_mac_init(&st, &key, &nonce);
+    ret = aegis.aegis256x2_mac_update(&st, &msg, msg.len);
+    try testing.expectEqual(ret, 0);
+    ret = aegis.aegis256x2_mac_final(&st, &mac128, mac128.len);
+    try testing.expectEqual(ret, 0);
+    aegis.aegis256x2_mac_reset(&st);
+    ret = aegis.aegis256x2_mac_update(&st, &msg, msg.len);
+    try testing.expectEqual(ret, 0);
+    ret = aegis.aegis256x2_mac_final(&st, &mac256, mac256.len);
+    try testing.expectEqual(ret, 0);
+    const expected128_hex = "47fb35135afe3520cf0b47458024eca8";
+    const expected256_hex = "894989e7d22b766fdb108374dabdb055b0eda8776a27ae052f6ed36c25bf9a7a";
+    var expected128: [16]u8 = undefined;
+    var expected256: [32]u8 = undefined;
+    _ = try std.fmt.hexToBytes(&expected128, expected128_hex);
+    _ = try std.fmt.hexToBytes(&expected256, expected256_hex);
+    try std.testing.expectEqualSlices(u8, &expected128, &mac128);
+    try std.testing.expectEqualSlices(u8, &expected256, &mac256);
+}
+
+test "aegis256x4 - MAC test vector" {
+    const key = [_]u8{ 0x10, 0x01 } ++ [_]u8{0x00} ** (32 - 2);
+    const nonce = [_]u8{ 0x10, 0x00, 0x02 } ++ [_]u8{0x00} ** (32 - 3);
+    var msg: [35]u8 = undefined;
+    for (&msg, 0..) |*byte, i| byte.* = @truncate(i);
+    var mac128: [16]u8 = undefined;
+    var mac256: [32]u8 = undefined;
+    var st: aegis.aegis256x4_mac_state = undefined;
+    var ret: c_int = undefined;
+    aegis.aegis256x4_mac_init(&st, &key, &nonce);
+    ret = aegis.aegis256x4_mac_update(&st, &msg, msg.len);
+    try testing.expectEqual(ret, 0);
+    ret = aegis.aegis256x4_mac_final(&st, &mac128, mac128.len);
+    try testing.expectEqual(ret, 0);
+    aegis.aegis256x4_mac_reset(&st);
+    ret = aegis.aegis256x4_mac_update(&st, &msg, msg.len);
+    try testing.expectEqual(ret, 0);
+    ret = aegis.aegis256x4_mac_final(&st, &mac256, mac256.len);
+    try testing.expectEqual(ret, 0);
+    const expected128_hex = "46478aec625986ecfed99348a7c2f13c";
+    const expected256_hex = "d45ab883ba0917faa248e33a07d36699bab4dc9cd0253c48e6dd7a8dcf5ce1b2";
     var expected128: [16]u8 = undefined;
     var expected256: [32]u8 = undefined;
     _ = try std.fmt.hexToBytes(&expected128, expected128_hex);
